@@ -2,19 +2,47 @@
 # -*- coding: utf-8 -*-
 #
 
+import urllib2
+from xml.dom import minidom
+from time import strftime, strptime
+
 class Data():
 
     def getData(self):
+        rssContent = self.__getFileContent()
+        return self.__getParsedData(rssContent)
+		
+    def __getParsedData(self, fileContent):
+        xmldoc = minidom.parseString(fileContent)
+        items = xmldoc.getElementsByTagName('item')
+        tempImageUrl = "http://img1.cache.netease.com/catchpic/4/4A/4AE0B96772F4EFDAF1CB6CB0BBEDEA9F.jpg"
+
         ret = []
-        ret.append(self.__wrapItem("http://www.cnn.com/2014/12/17/opinion/stanley-interview-threats/index.html?hpt=hp_t3", "Title", "Publisher", "Date", "http://img1.cache.netease.com/catchpic/4/4A/4AE0B96772F4EFDAF1CB6CB0BBEDEA9F.jpg"))
-        ret.append(self.__wrapItem("http://www.cnn.com/2014/12/17/opinion/stanley-interview-threats/index.html?hpt=hp_t3", "As 'The Interview' is pulled, does this mean North Korea wins?", "CNN", "Dec. 17 2014", "http://img1.cache.netease.com/catchpic/4/4A/4AE0B96772F4EFDAF1CB6CB0BBEDEA9F.jpg"))
-        ret.append(self.__wrapItem("http://www.insidercarnews.com/10-cars-that-are-being-discontinued-after-2015/?utm_source=yahoo&utm_medium=partner&utm_campaign=yahoo-all", "10 Cars That Are Being Discontinued After 2015", "CNN", "Oct. 31 2014", "http://img1.cache.netease.com/catchpic/4/4A/4AE0B96772F4EFDAF1CB6CB0BBEDEA9F.jpg"))
-        ret.append(self.__wrapItem("http://money.cnn.com/2014/10/01/autos/ticket-magnets/?hpt=ob_articleallcontentsidebar&iid=obnetwork", "America's top 20 speeding ticket magnets", "CNN", "Oct. 1 2014", "http://img1.cache.netease.com/catchpic/4/4A/4AE0B96772F4EFDAF1CB6CB0BBEDEA9F.jpg"))
-        ret.append(self.__wrapItem("http://news.qq.com/a/20141217/070665.htm?tu_biz=1.114.1.0", "调查称习近平认可度和本国人民信心度均排第一", "CNN", "Dec. 17 2014", "http://img1.cache.netease.com/catchpic/4/4A/4AE0B96772F4EFDAF1CB6CB0BBEDEA9F.jpg"))
-        #ret.append(self.__wrapItem("url", "title", "CNN", "date", "http://img1.cache.netease.com/catchpic/4/4A/4AE0B96772F4EFDAF1CB6CB0BBEDEA9F.jpg"))
-        
-        
+        for item in items:
+            try:
+                title = item.getElementsByTagName('title')[0].firstChild.nodeValue
+                pubIndex = title.rfind('-')
+                publisher = ""
+                if pubIndex >= 0:
+                    publisher = title[pubIndex+1:].strip()
+                    title = title[0 : pubIndex].strip()
+                    link = item.getElementsByTagName('link')[0].firstChild.nodeValue
+                    dateStr = item.getElementsByTagName('pubDate')[0].firstChild.nodeValue
+                    dateObj = strptime(dateStr, '%a, %d %b %Y %H:%M:%S %Z')
+                    formatedDate = strftime('%b %d %Y', dateObj)
+
+                    ret.append(self.__wrapItem(link, title, publisher, formatedDate, tempImageUrl))
+            except Exception as e:
+                print e
+
         return ret
+		
+    def __getFileContent(self):
+        dfile = urllib2.urlopen(r'https://news.google.com/news?pz=1&cf=all&ned=cn&hl=zh-CN&output=rss')
+        content = dfile.read()
+        dfile.close()
+
+        return content
 
     def __wrapItem(self, url, title, publisherName, date, newsImage):
         item = {}
@@ -26,5 +54,3 @@ class Data():
         item['newsImage'] = newsImage
     
         return item
-
-    
