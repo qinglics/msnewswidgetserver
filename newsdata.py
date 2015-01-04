@@ -5,6 +5,7 @@
 import urllib2
 from xml.dom import minidom
 from time import strftime, strptime
+from mainimage import MainImageOfUrl
 
 class Data():
 
@@ -27,11 +28,14 @@ class Data():
                     publisher = title[pubIndex+1:].strip()
                     title = title[0 : pubIndex].strip()
                     link = item.getElementsByTagName('link')[0].firstChild.nodeValue
+                    imgUrl = MainImageOfUrl(link).getImage()
+                    if None == imgUrl or 0 == len(imgUrl):
+                        imgUrl = tempImageUrl
                     dateStr = item.getElementsByTagName('pubDate')[0].firstChild.nodeValue
                     dateObj = strptime(dateStr, '%a, %d %b %Y %H:%M:%S %Z')
                     formatedDate = strftime('%b %d %Y', dateObj)
 
-                    ret.append(self.__wrapItem(link, title, publisher, formatedDate, tempImageUrl))
+                    ret.append(self.__wrapItem(link, title, publisher, formatedDate, imgUrl))
             except Exception as e:
                 print e
 
