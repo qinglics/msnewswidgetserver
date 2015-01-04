@@ -3,6 +3,7 @@
 #
 
 import urllib2
+from encoding import detectCoding
 
 class MainImageOfUrl():
 
@@ -41,7 +42,9 @@ class MainImageOfUrl():
             if False == val[i].isdigit():
                 idx = i
                 break
-        return int(val[0:idx])
+        if idx > 0:
+            return int(val[0:idx])
+        return 0
         
     @staticmethod
     def getValue(s, startIdx, attr):
@@ -60,6 +63,13 @@ class MainImageOfUrl():
             dfile = urllib2.urlopen(self.url)
             content = dfile.read()
             dfile.close()
+            try:
+                coding = detectCoding(content)
+                if len(coding) >= 0: # default is utf-8
+                    content = content.decode(coding).encode('UTF-8')
+            except Exception as e:
+                content = "" #cannot process the page because of encoding
+                print e
         except Exception as e:
             print e
 
