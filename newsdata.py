@@ -28,6 +28,9 @@ class Data():
                     publisher = title[pubIndex+1:].strip()
                     title = title[0 : pubIndex].strip()
                     link = item.getElementsByTagName('link')[0].firstChild.nodeValue
+                    urlIdx = link.find('url=')
+                    if urlIdx >= 0:
+                        link = link[urlIdx+4:].strip()
                     imgUrl = MainImageOfUrl(link).getImage()
                     if None == imgUrl or 0 == len(imgUrl):
                         imgUrl = tempImageUrl
