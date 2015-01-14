@@ -28,7 +28,7 @@ class Data():
                     publisher = title[pubIndex+1:].strip()
                     title = title[0 : pubIndex].strip()
                     link = item.getElementsByTagName('link')[0].firstChild.nodeValue
-                    urlIdx = link.find('url=')
+                    urlIdx = link.rfind('url=')
                     if urlIdx >= 0:
                         link = link[urlIdx+4:].strip()
                     imgUrl = MainImageOfUrl(link).getImage()
