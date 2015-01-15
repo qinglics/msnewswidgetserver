@@ -30,7 +30,6 @@ class ImageSize(object):
     def getXYOfImage(self):
         imgContent = self.__getContent()
         im = Image.open(StringIO(imgContent))
-        print im.size
         return im.size
         
         

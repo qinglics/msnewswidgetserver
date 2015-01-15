@@ -5,7 +5,7 @@
 import urllib2
 import imageurls
 from encoding import detectCoding
-from multiprocessing import Pool
+import threading
 from getimagesize import ImageSize
 
 def getSizeOfImage(url):
@@ -14,6 +14,12 @@ def getSizeOfImage(url):
     except Exception as e:
         print e
     return (0, 0)
+
+def getImageSizeThread(url, imgsWithSize):
+    try:
+        imgsWithSize[url] = getSizeOfImage(url)
+    except Exception as e:
+        print e
 
 class MainImageOfUrl():
 
@@ -27,16 +33,29 @@ class MainImageOfUrl():
     def __getMainImage(self, content):
         (imgsWithSize, orderedUrl) = self.__getImgWithSize(content)
         print imgsWithSize
-        imgsWithNoSize = []
+        threads = []
         for url in imgsWithSize.keys():
+            t = None
             if None == imgsWithSize[url]:
-                imgsWithNoSize.append(url)
+                t = threading.Thread(target=getImageSizeThread, args=(url, imgsWithSize))
+            elif 2 != len(imgsWithSize[url]):
+                t = threading.Thread(target=getImageSizeThread, args=(url, imgsWithSize))
             elif 0 == imgsWithSize[url][0] or 0 == imgsWithSize[url][1]:
-                imgsWithNoSize.append(url)
-        pool = Pool(10)
-        sizes = pool.map(getSizeOfImage, imgsWithNoSize)
-        for i in range(0, len(imgsWithNoSize)):
-            imgsWithSize[imgsWithNoSize[i]] = sizes[i]
+                t = threading.Thread(target=getImageSizeThread, args=(url, imgsWithSize))
+            if None != t:    
+                threads.append(t)
+        
+        for t in threads:
+            try:
+                t.start()
+            except Exception as e:
+                pass
+        for t in threads:
+            try:
+                t.join(10)
+            except Exception as e:
+                print e
+        
         
         if len(imgsWithSize) == 0:
             return ""
@@ -128,18 +147,19 @@ if '__main__' == __name__:
     def test(url, result):
         imgUrl = MainImageOfUrl(url).getImage()
         if imgUrl == result:
-            print str(test.test_no) + ' pass'
+            test.result.append(' pass')
         else:
-            print str(test.test_no) + ' fail'
+            test.result.append(' fail')
             print imgUrl
 
-        test.test_no += 1
-    test.test_no = 1
+    test.result = []
     print 'test'
     test('http://roll.sohu.com/20150104/n407502616.shtml', 'http://photocdn.sohu.com/20150104/Img407502619.jpg')
     test('http://www.jfdaily.com/guonei/new/201501/t20150104_1111896.html', 'http://images.jfdaily.com/jiefang/guonei/new/201501/W020150104423183200547.jpg')
     test('http://money.cnn.com/2015/01/13/technology/security/cameron-messaging-data/index.html', 'http://i2.cdn.turner.com/money/dam/assets/150113091043-cameron-messaging-data-620xa.jpg')
     #test('', '')
     test('http://mobile.163.com/15/0112/07/AFOAH0670011179O.html#index_digi_1', 'http://img1.cache.netease.com/catchpic/9/98/98A017FB7CC3EC9ABA73073E84A10657.jpg')
-    test('http://www.cnn.com/2015/01/13/asia/airasia-disaster/index.html', 'http://i2.cdn.turner.com/cnnnext/dam/assets/150113071041-01-airasia-0113-super-169.jpg')
+    test('http://www.cnn.com/2015/01/13/asia/airasia-disaster/index.html', 'http://i2.cdn.turner.com/cnnnext/dam/assets/150114091745-01-airasia-0114-super-169.jpg')
     
+    for i in range(0, len(test.result)):
+        print "test " + str(i+1) + test.result[i]
